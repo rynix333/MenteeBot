@@ -14,10 +14,6 @@ jobs:
         run: python -m py_compile hello_world.py
       - id: v
         run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
-      - name: Show OIDC claims
-        run: |
-          TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | python3 -c "import sys,json; print(json.load(sys.stdin)['value'])")
-          echo "$TOKEN" | cut -d. -f2 | python3 -c "import sys,base64,json; s=sys.stdin.read().strip(); s+='='*(-len(s)%4); d=json.loads(base64.urlsafe_b64decode(s)); print('sub=',d['sub']); print('aud=',d['aud'])"
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::030454160336:role/exam-github-deploy
@@ -33,3 +29,8 @@ jobs:
           tags: ${{ steps.ecr.outputs.registry }}/mentibot:${{ steps.v.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Deploy to ECS Express
+        run: |
+          aws ecs update-express-gateway-service \
+            --service-arn "${{ vars.SERVICE_ARN }}" \
+            --primary-container '{"image":"${{ steps.ecr.outputs.registry }}/mentibot:${{ steps.v.outputs.version }}","containerPort":8080}'

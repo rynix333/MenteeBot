@@ -10,7 +10,7 @@ class Handler(BaseHTTPRequestHandler):
         elif self.path == "/version":
             body = VERSION
         else:
-            body = f"Hello, World! version={VERSION}"
+            body = f"Hello, World v2! version={VERSION}"
         self.send_response(200)
         self.send_header("Content-Type", "text/plain")
         self.end_headers()
